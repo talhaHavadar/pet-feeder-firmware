@@ -5,6 +5,8 @@
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/gpio.h>
+#include <linux/ioctl.h>
+#include <linux/errno.h>
 
 #define MODULE_NAME         "pet_feeder"
 #define DEVICE_NAME         "pet_feeder"
@@ -20,6 +22,10 @@ MODULE_DESCRIPTION("");
 MODULE_AUTHOR("Talha Can Havadar <tcanhavadar@gmail.com>");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("0.0.0");
+
+#define PF_IOCTL_HEY _IO('k', 0xCC)
+
+long pet_feeder_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
 
 typedef struct
 {
@@ -42,7 +48,7 @@ static PetFeederModuleStc sPetFeederModuleStc = {
         .read           = NULL,
         .write          = NULL,
         .llseek         = NULL,
-        .unlocked_ioctl = NULL,
+        .unlocked_ioctl = pet_feeder_ioctl,
         .open           = NULL,
         .release        = NULL,
     },
@@ -51,6 +57,25 @@ static PetFeederModuleStc sPetFeederModuleStc = {
         .owner = THIS_MODULE,
     },
 };
+
+long pet_feeder_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+    switch (cmd)
+    {
+        case PF_IOCTL_HEY:
+        {
+            printk(KERN_INFO "%s: Hello from the ioctl bro!.\n", MODULE_NAME);
+            break;
+        }
+
+        default:
+        {
+            return -EINVAL;
+        }
+    }
+
+    return 0;
+}
 
 static int __init pet_feeder_module_init(void)
 {
