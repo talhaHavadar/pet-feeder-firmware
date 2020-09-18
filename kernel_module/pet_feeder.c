@@ -7,6 +7,7 @@
 #include <linux/gpio.h>
 #include <linux/ioctl.h>
 #include <linux/errno.h>
+#include <linux/interrupt.h>
 
 #define MODULE_NAME         "pet_feeder"
 #define DEVICE_NAME         "pet_feeder"
@@ -102,8 +103,12 @@ static int __init pet_feeder_module_init(void)
 
     // TODO: get gpio pins from device tree node.
     sPetFeederModuleStc.gpioPins.a = 22;
+    sPetFeederModuleStc.gpioPins.b = 27;
     gpio_request(sPetFeederModuleStc.gpioPins.a, "PF_GPIO_PIN_A");
+    gpio_request(sPetFeederModuleStc.gpioPins.b, "PF_GPIO_PIN_B");
     gpio_direction_output(sPetFeederModuleStc.gpioPins.a, 1);
+    gpio_direction_input(sPetFeederModuleStc.gpioPins.b);
+    enable_irq(gpio_to_irq(sPetFeederModuleStc.gpioPins.b));
 
 
 
@@ -119,8 +124,9 @@ static void __exit pet_feeder_module_exit(void)
     cdev_del(&sPetFeederModuleStc.cdev);
     unregister_chrdev_region(sPetFeederModuleStc.devno, 1);
 
-
+    disable_irq(gpio_to_irq(sPetFeederModuleStc.gpioPins.b));
     gpio_free(sPetFeederModuleStc.gpioPins.a);
+    gpio_free(sPetFeederModuleStc.gpioPins.b);
 }
 
 module_init(pet_feeder_module_init);
